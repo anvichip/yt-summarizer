@@ -3,6 +3,7 @@ import asyncio
 import tempfile
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
+import ffmpeg
 
 
 image = (
@@ -25,12 +26,13 @@ def get_mp3_yt(url):
     import io
     yt = YouTube(url)
     video = yt.streams.filter(only_audio=True).first()
-    # buffer = io.BytesIO()
-    # video.stream_to_buffer(buffer)
-    # buffer.seek(0)
-    return video
+    buffer = io.BytesIO()
+    video.stream_to_buffer(buffer)
+    buffer.seek(0)
+    return buffer.read()
 
-#def load_audio(data: bytes, start=None, end=None, sr: int = 16000):
+@stub.function()
+def load_audio(data: bytes, start=None, end=None, sr: int = 16000):
     import ffmpeg
     import numpy as np
 
@@ -69,10 +71,12 @@ def get_mp3_yt(url):
 
 @stub.function()
 def stream_whisper(audio_data: bytes):
-    # with tempfile.NamedTemporaryFile(delete=False) as fil:
-    #     fil.write(audio_data)
-    #     fil.flush()
-    #     transcripts = transcribe.remote(fil.read())
+    with tempfile.NamedTemporaryFile(delete=False) as fil:
+        fil.write(audio_data)
+        fil.flush()
+        np_array = load_audio.remote(audio_data, start=None, end=None)
+        transcripts = transcribe.remote(np_array)
+        #result = model.transcribe(np_array, language="en", fp16=use_gpu)
         #segment_gen = split_silences(f.name)
 
     # for result in transcribe_segment.starmap(
@@ -83,20 +87,20 @@ def stream_whisper(audio_data: bytes):
         #await asyncio.sleep(0.5)
         #yield transcripts
         #print(transcripts)
-    transcripts = transcribe.remote(bytes)
+    #transcripts = transcribe.remote(bytes)
     return transcripts
 
 @stub.function()
-def transcribe(bytes):
+def transcribe(np_array):
     import torch
     import whisper
 
     use_gpu = torch.cuda.is_available()
     device = "cuda" if use_gpu else "cpu"
     model = whisper.load_model("small", device=device)
-    result = model.transcribe(bytes)
-    #np_array = load_audio(audio_data)
-    #result = model.transcribe(np_array, language="en", fp16=use_gpu)  # type: ignore
+    #result = model.transcribe(bytes)
+    #np_array = load_audio(bytes)
+    result = model.transcribe(np_array, language="en", fp16=use_gpu)  # type: ignore
     return result
     # print(
     #     f"Transcribed segment {start:.2f} to {end:.2f} ({end - start:.2f}s duration) in {time.time() - t0:.2f} seconds."
