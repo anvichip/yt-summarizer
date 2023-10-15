@@ -4,6 +4,7 @@ import tempfile
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
 import ffmpeg
+from modal import web_endpoint
 
 
 image = (
@@ -76,18 +77,6 @@ def stream_whisper(audio_data: bytes):
         fil.flush()
         np_array = load_audio.remote(audio_data, start=None, end=None)
         transcripts = transcribe.remote(np_array)
-        #result = model.transcribe(np_array, language="en", fp16=use_gpu)
-        #segment_gen = split_silences(f.name)
-
-    # for result in transcribe_segment.starmap(
-    #     segment_gen, kwargs=dict(audio_data=audio_data, model="base.en")
-    # ):
-        # Must cooperatively yeild here otherwise `StreamingResponse` will not iteratively return stream parts.
-        # see: https://github.com/python/asyncio/issues/284
-        #await asyncio.sleep(0.5)
-        #yield transcripts
-        #print(transcripts)
-    #transcripts = transcribe.remote(bytes)
     return transcripts
 
 @stub.function()
@@ -98,21 +87,15 @@ def transcribe(np_array):
     use_gpu = torch.cuda.is_available()
     device = "cuda" if use_gpu else "cpu"
     model = whisper.load_model("small", device=device)
-    #result = model.transcribe(bytes)
-    #np_array = load_audio(bytes)
     result = model.transcribe(np_array, language="en", fp16=use_gpu)  # type: ignore
     return result
-    # print(
-    #     f"Transcribed segment {start:.2f} to {end:.2f} ({end - start:.2f}s duration) in {time.time() - t0:.2f} seconds."
-    # )
 
-
-
-
-@stub.local_entrypoint()
+#@stub.local_entrypoint()
+@stub.function()
+@web_endpoint(method="POST")
 def main():
     url = 'https://www.youtube.com/watch?v=Jqoasg8HJsk'
     bytes = get_mp3_yt.remote(url)
     transcript = stream_whisper.remote(bytes)
-    print(transcript)
-    print("Success")
+    return transcript
+
