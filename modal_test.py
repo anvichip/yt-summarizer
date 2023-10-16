@@ -4,6 +4,7 @@ import tempfile
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
 import ffmpeg
+from typing import Dict
 from modal import web_endpoint
 
 
@@ -93,9 +94,12 @@ def transcribe(np_array):
 #@stub.local_entrypoint()
 @stub.function()
 @web_endpoint(method="POST")
-def main():
-    url = 'https://www.youtube.com/watch?v=Jqoasg8HJsk'
+def main(item: Dict):
+    #data = {"url": "https://www.youtube.com/watch?v=Jqoasg8HJsk"}
+    #url = 'https://www.youtube.com/watch?v=Jqoasg8HJsk'
+    url = str(item['url'])
     bytes = get_mp3_yt.remote(url)
     transcript = stream_whisper.remote(bytes)
+    #print(transcript)
     return transcript
 

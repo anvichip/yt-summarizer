@@ -1,13 +1,16 @@
 import requests
-from api_key import url
-url = url
+from api_key import server_url
+#url = server_url
 def jsonify(url):
     data = {"url" : url }
     return data
 
 def make_api_request(url_vid):
     try:
+        url = server_url
         data = jsonify(url_vid)
+        print(url)
+        print(data)
         response = requests.post(url, json=data)
 
         # Process the response
@@ -23,8 +26,8 @@ def make_api_request(url_vid):
 
 # Example usage:
 # url1 = "https://anvichip--example-whisper-streaming-main-dev.modal.run"
-# data = {"url": "https://www.youtube.com/watch?v=Jqoasg8HJsk"}
-# #url = 'https://www.youtube.com/watch?v=Jqoasg8HJsk'
-# result = make_api_request(data['url'])
-# # if result is not None:
+#data = {"url": "https://www.youtube.com/watch?v=Jqoasg8HJsk"}
+# url = 'https://www.youtube.com/watch?v=Jqoasg8HJsk'
+# result = make_api_request(url)
+# # # # if result is not None:
 # print(result)
