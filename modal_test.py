@@ -34,7 +34,7 @@ def get_mp3_yt(url):
     return buffer.read()
 
 @stub.function()
-def load_audio(data: bytes, start=None, end=None, sr: int = 16000):
+def load_audio(data: bytes, start=None, end=None, sr: int = 16000,timeout = 900):
     import ffmpeg
     import numpy as np
 
@@ -71,7 +71,7 @@ def load_audio(data: bytes, start=None, end=None, sr: int = 16000):
     return np.frombuffer(out, np.int16).flatten().astype(np.float32) / 32768.0
 
 
-@stub.function()
+@stub.function(timeout = 900)
 def stream_whisper(audio_data: bytes):
     with tempfile.NamedTemporaryFile(delete=False) as fil:
         fil.write(audio_data)
@@ -80,7 +80,7 @@ def stream_whisper(audio_data: bytes):
         transcripts = transcribe.remote(np_array)
     return transcripts
 
-@stub.function()
+@stub.function(timeout = 900)
 def transcribe(np_array):
     import torch
     import whisper
@@ -92,7 +92,7 @@ def transcribe(np_array):
     return result
 
 #@stub.local_entrypoint()
-@stub.function()
+@stub.function(timeout = 900)
 @web_endpoint(method="POST")
 def main(item: Dict):
     #data = {"url": "https://www.youtube.com/watch?v=Jqoasg8HJsk"}

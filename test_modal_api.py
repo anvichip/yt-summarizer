@@ -9,8 +9,8 @@ def make_api_request(url_vid):
     try:
         url = server_url
         data = jsonify(url_vid)
-        print(url)
-        print(data)
+        #print(url)
+        #print(data)
         response = requests.post(url, json=data)
 
         # Process the response
